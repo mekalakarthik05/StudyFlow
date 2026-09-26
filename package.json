@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "description": "StudyFlow - AI-Powered Study Assistant",
   "private": true,
+  "engines": {
+    "node": ">=22"
+  },
   "workspaces": [
     "client",
     "server"

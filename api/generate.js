@@ -1,12 +1,24 @@
 /**
- * Vercel serverless function — wraps the Express app for the /api/generate route.
- * The Express app is imported from server/index.js which exports `app` as default.
- * Vercel invokes this handler for requests to /api/generate.
+ * Vercel Serverless Function — /api/generate
+ *
+ * Vercel automatically routes HTTP requests to /api/generate to this file.
+ * This module imports the Express app from server/index.js (which exports it
+ * as default without calling app.listen()) and delegates the request to it.
+ *
+ * The Express app handles:
+ *   - Input validation
+ *   - Prompt construction
+ *   - Gemini API call (server-side only — GEMINI_API_KEY never reaches browser)
+ *   - JSON parsing (Layer 1)
+ *   - Structured response to client
+ *
+ * Local development uses Vite's /api proxy → localhost:5000 instead.
  */
 import app from '../server/index.js';
 
 export default function handler(req, res) {
-  // Simulate the /api/generate route on the Express app
+  // Normalise the URL so Express matches the /api/generate route correctly
   req.url = '/api/generate';
-  app(req, res);
+  // Delegate to Express — Express apps are valid Node http.RequestListener instances
+  return app(req, res);
 }
