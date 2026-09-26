@@ -4,7 +4,7 @@
   "outputDirectory": "client/dist",
   "functions": {
     "api/generate.js": {
-      "runtime": "nodejs22.x"
+      "runtime": "nodejs24.x"
     }
   },
   "rewrites": [

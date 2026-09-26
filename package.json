@@ -4,7 +4,7 @@
   "description": "StudyFlow - AI-Powered Study Assistant",
   "private": true,
   "engines": {
-    "node": ">=22"
+    "node": "24.x"
   },
   "workspaces": [
     "client",
