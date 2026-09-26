@@ -6,6 +6,7 @@ export default function FlashcardDeck({ flashcards = [], onBackToOverview }) {
 
   const total = flashcards.length;
   const current = flashcards[currentCard] || { question: '', answer: '' };
+  const progressPercent = total > 0 ? ((currentCard + 1) / total) * 100 : 0;
 
   const handleToggleAnswer = () => {
     setShowAnswer((prev) => !prev);
@@ -28,43 +29,44 @@ export default function FlashcardDeck({ flashcards = [], onBackToOverview }) {
   return (
     <div className="flashcards-container">
       <div className="deck-nav-bar">
-        <button
-          type="button"
-          className="btn-back-nav"
-          onClick={onBackToOverview}
-        >
+        <button type="button" className="btn-back-nav" onClick={onBackToOverview}>
           <span className="nav-arrow" aria-hidden="true">←</span>
           <span>Study Session</span>
         </button>
       </div>
 
       <div className="deck-header-row">
-        <div className="deck-badge-pill">FLASHCARDS</div>
+        <div className="deck-badge-pill">Flashcards</div>
         <div className="deck-progress-text">
           Card <span className="deck-counter-current">{currentCard + 1}</span> of {total}
         </div>
       </div>
 
+      {/* Progress bar */}
+      <div className="sf-progress-bar" role="progressbar" aria-valuenow={currentCard + 1} aria-valuemin={1} aria-valuemax={total}>
+        <div
+          className="sf-progress-fill progress-fill-purple"
+          style={{ width: `${progressPercent}%` }}
+        />
+      </div>
+
+      {/* Flashcard */}
       <div className="card flashcard-surface">
         <div className="flashcard-status-badge">
-          {showAnswer ? 'ANSWER' : 'QUESTION'}
+          {showAnswer ? 'Answer' : 'Question'}
         </div>
 
         <div className="flashcard-main-content">
           {showAnswer ? (
             <div className="flashcard-answer-revealed">
               <div className="revealed-question-context">
-                <span className="context-label">Question:</span> {current.question}
+                <span className="context-label">Q:</span> {current.question}
               </div>
               <div className="revealed-divider" />
-              <div className="revealed-answer-text">
-                {current.answer}
-              </div>
+              <div className="revealed-answer-text">{current.answer}</div>
             </div>
           ) : (
-            <div className="flashcard-question-text">
-              {current.question}
-            </div>
+            <div className="flashcard-question-text">{current.question}</div>
           )}
         </div>
 
@@ -79,6 +81,7 @@ export default function FlashcardDeck({ flashcards = [], onBackToOverview }) {
         </div>
       </div>
 
+      {/* Navigation */}
       <div className="flashcard-step-controls">
         <button
           type="button"
@@ -88,7 +91,6 @@ export default function FlashcardDeck({ flashcards = [], onBackToOverview }) {
         >
           ← Previous
         </button>
-
         <button
           type="button"
           className="btn btn-primary flashcard-nav-btn"

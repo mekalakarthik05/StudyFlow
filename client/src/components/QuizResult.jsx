@@ -25,29 +25,56 @@ export default function QuizResult({
     onRetest(wrongQuestions);
   };
 
+  // SVG ring math
+  const radius = 50;
+  const circumference = 2 * Math.PI * radius;
+  const strokeDashoffset = circumference - (percent / 100) * circumference;
+
   return (
     <div className="quiz-result-wrapper">
       <div className="card result-surface-card">
-        <div className="result-badge-icon" aria-hidden="true">
-          {missedCount === 0 ? '✦' : '✓'}
-        </div>
-
         <h2 className="result-headline">
           {isRetest ? 'Retest Complete' : 'Quiz Complete'}
         </h2>
 
-        <div className="result-score-box">
-          <div className="score-primary-metric">
-            <span className="score-obtained">{score}</span>
-            <span className="score-slash">/</span>
-            <span className="score-total-count">{total}</span>
+        {/* SVG score ring */}
+        <div className="score-ring-container">
+          <div className="score-ring">
+            <svg className="score-ring-svg" viewBox="0 0 120 120">
+              <defs>
+                <linearGradient id="ringGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%" stopColor="#3B82F6" />
+                  <stop offset="100%" stopColor="#8B5CF6" />
+                </linearGradient>
+              </defs>
+              <circle
+                className="score-ring-track"
+                cx="60" cy="60" r={radius}
+              />
+              <circle
+                className="score-ring-fill"
+                cx="60" cy="60" r={radius}
+                strokeDasharray={circumference}
+                strokeDashoffset={strokeDashoffset}
+              />
+            </svg>
+            <div className="score-ring-center">
+              <span className="score-ring-percent">{percent}%</span>
+              <span className="score-ring-label">Correct</span>
+            </div>
           </div>
-          <div className="score-pct-label">{percent}% Correct</div>
+        </div>
+
+        <div className="result-score-fraction">
+          <span className="score-fraction-highlight">{score}</span>
+          {' / '}
+          <span className="score-fraction-highlight">{total}</span>
+          {' questions correct'}
         </div>
 
         <div className="result-insight-message">
           {missedCount === 0 ? (
-            <p className="insight-perfect">Perfect score! Excellent understanding.</p>
+            <p className="insight-perfect">✦ Perfect score! Excellent understanding.</p>
           ) : (
             <p className="insight-missed">
               You missed {missedCount} {missedCount === 1 ? 'question' : 'questions'}.
@@ -62,16 +89,15 @@ export default function QuizResult({
               className="btn btn-primary btn-block retest-cta-btn"
               onClick={handleRetestClick}
             >
-              Retest Wrong Answers ({missedCount})
+              Retest Wrong Answers ({missedCount}) →
             </button>
           )}
-
           <button
             type="button"
             className={`btn ${!isRetest && hasWrongAnswers ? 'btn-secondary' : 'btn-primary'} btn-block return-overview-btn`}
             onClick={onBackToOverview}
           >
-            Back to Study Session
+            ← Back to Study Session
           </button>
         </div>
       </div>

@@ -11,27 +11,21 @@ export default function Quiz({
   const [answers, setAnswers] = useState([]);
 
   const total = questions.length;
-  const current = questions[currentQuestion] || {
-    question: '',
-    options: [],
-    correctAnswer: 0,
-  };
-
+  const current = questions[currentQuestion] || { question: '', options: [], correctAnswer: 0 };
   const isOptionSelected = selectedOption !== null;
   const isLastQuestion = currentQuestion === total - 1;
+  const isRetest = headerLabel === 'RETEST';
 
   const handleSelectOption = (index) => {
-    if (isOptionSelected) return; // Locked once chosen
-
+    if (isOptionSelected) return;
     setSelectedOption(index);
-    const updatedAnswers = [...answers];
-    updatedAnswers[currentQuestion] = index;
-    setAnswers(updatedAnswers);
+    const updated = [...answers];
+    updated[currentQuestion] = index;
+    setAnswers(updated);
   };
 
   const handleNext = () => {
     if (!isOptionSelected) return;
-
     if (isLastQuestion) {
       onComplete(answers);
     } else {
@@ -43,24 +37,22 @@ export default function Quiz({
   return (
     <div className="quiz-container">
       <div className="quiz-nav-bar">
-        <button
-          type="button"
-          className="btn-back-nav"
-          onClick={onBackToOverview}
-        >
+        <button type="button" className="btn-back-nav" onClick={onBackToOverview}>
           <span className="nav-arrow" aria-hidden="true">←</span>
           <span>Study Session</span>
         </button>
       </div>
 
       <div className="quiz-header-row">
-        <div className="quiz-badge-tag">{headerLabel}</div>
+        <div className={`quiz-badge-tag${isRetest ? ' retest-badge' : ''}`}>
+          {headerLabel}
+        </div>
         <div className="quiz-progress-text">
           Question <span className="quiz-counter-current">{currentQuestion + 1}</span> of {total}
         </div>
       </div>
 
-      {/* Progress Dots Indicator */}
+      {/* Progress dots */}
       <div className="quiz-progress-track" aria-hidden="true">
         {questions.map((_, idx) => (
           <div
@@ -70,13 +62,13 @@ export default function Quiz({
                 ? 'step-completed'
                 : idx === currentQuestion
                 ? 'step-current'
-                : 'step-pending'
+                : ''
             }`}
           />
         ))}
       </div>
 
-      <div className="card quiz-surface-card">
+      <div className={`card quiz-surface-card${isRetest ? ' retest-card' : ''}`}>
         <h3 className="quiz-question-heading">{current.question}</h3>
 
         <div className="quiz-options-group" role="radiogroup" aria-label="Quiz options">
@@ -132,7 +124,7 @@ export default function Quiz({
             onClick={handleNext}
             disabled={!isOptionSelected}
           >
-            {isLastQuestion ? 'See Results' : 'Next Question →'}
+            {isLastQuestion ? 'See Results →' : 'Next Question →'}
           </button>
         </div>
       </div>

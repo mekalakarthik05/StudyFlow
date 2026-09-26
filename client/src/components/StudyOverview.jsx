@@ -9,11 +9,7 @@ export default function StudyOverview({ studyData, onStartFlashcards, onStartQui
   return (
     <div className="overview-container">
       <div className="overview-nav">
-        <button
-          type="button"
-          className="btn-back-nav"
-          onClick={onNewStudy}
-        >
+        <button type="button" className="btn-back-nav" onClick={onNewStudy}>
           <span className="nav-arrow" aria-hidden="true">←</span>
           <span>New Study</span>
         </button>
@@ -24,56 +20,52 @@ export default function StudyOverview({ studyData, onStartFlashcards, onStartQui
         <p className="overview-subtitle">Your personalized study session</p>
       </div>
 
-      {/* Quick Summary Card */}
+      {/* Quick Summary */}
       <section className="card summary-card">
         <div className="section-badge-tag">
           <span className="badge-bullet" aria-hidden="true">●</span>
-          <span>QUICK SUMMARY</span>
+          Quick Summary
         </div>
         <p className="summary-text">{studyData.summary}</p>
       </section>
 
-      {/* Action Cards Grid */}
+      {/* Action Cards */}
       <div className="overview-action-grid">
         {/* Flashcards Card */}
-        <div className="card product-action-card">
+        <div className="card product-action-card card-flashcards">
           <div className="action-card-top">
-            <span className="action-tag">FLASHCARDS</span>
-            <span className="action-count-pill">{flashcardCount} cards</span>
+            <div className="action-icon-circle icon-purple" aria-hidden="true">✦</div>
+            <span className="action-count-pill count-pill-purple">{flashcardCount} cards</span>
           </div>
           <div className="action-card-body">
-            <h3 className="action-card-heading">Review concepts</h3>
-            <p className="action-card-sub">
-              Test your recall with question and answer cards.
-            </p>
+            <h3 className="action-card-heading">Flashcards</h3>
+            <p className="action-card-sub">Review concepts with question and answer cards.</p>
           </div>
           <button
             type="button"
-            className="btn btn-primary btn-block action-start-btn"
+            className="action-start-btn-purple"
             onClick={onStartFlashcards}
           >
-            Start Flashcards
+            Start →
           </button>
         </div>
 
         {/* Quiz Card */}
-        <div className="card product-action-card">
+        <div className="card product-action-card card-quiz">
           <div className="action-card-top">
-            <span className="action-tag">QUIZ</span>
-            <span className="action-count-pill">{quizCount} questions</span>
+            <div className="action-icon-circle icon-cyan" aria-hidden="true">?</div>
+            <span className="action-count-pill count-pill-cyan">{quizCount} questions</span>
           </div>
           <div className="action-card-body">
-            <h3 className="action-card-heading">Test yourself</h3>
-            <p className="action-card-sub">
-              Check your understanding with {quizCount} multiple-choice questions.
-            </p>
+            <h3 className="action-card-heading">Quiz</h3>
+            <p className="action-card-sub">Test your understanding with multiple-choice questions.</p>
           </div>
           <button
             type="button"
-            className="btn btn-primary btn-block action-start-btn"
+            className="action-start-btn-cyan"
             onClick={onStartQuiz}
           >
-            Start Quiz
+            Start →
           </button>
         </div>
       </div>

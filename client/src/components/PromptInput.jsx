@@ -25,26 +25,30 @@ export default function PromptInput({
 
   return (
     <div className="home-container">
-      {/* Hero Header */}
+      {/* Hero */}
       <div className="hero-section">
         <div className="hero-pill-tag">
           <span className="hero-sparkle" aria-hidden="true">✦</span>
-          <span>Intelligent Study Generation</span>
+          <span>AI-Powered Study Assistant</span>
         </div>
-        <h2 className="hero-title">Learn smarter. Not harder.</h2>
+        <h2 className="hero-title">
+          Learn smarter.<br />Not harder.
+        </h2>
         <p className="hero-subtitle">
           Turn any topic or notes into an interactive study session in seconds.
         </p>
       </div>
 
-      {/* Main Product Card */}
+      {/* Main Input Card */}
       <div className="card prompt-card">
         <form onSubmit={handleSubmit} className="prompt-form">
+          <p className="prompt-card-label">What do you want to learn?</p>
+
           <div className="textarea-wrapper">
             <textarea
               id="prompt-input"
               className="prompt-textarea"
-              placeholder="Paste your topic or study notes here..."
+              placeholder="Paste your notes or describe a topic..."
               value={input}
               maxLength={maxLength}
               onChange={(e) => setInput(e.target.value)}
@@ -58,43 +62,48 @@ export default function PromptInput({
             </div>
           </div>
 
-          {isLoading ? (
-            loadingComponent
-          ) : (
-            <>
-              {errorComponent}
+          <div className="prompt-card-divider" />
 
-              <button
-                type="submit"
-                id="generate-button"
-                className="btn btn-primary btn-block generate-btn"
-                disabled={isInputEmpty || isLoading}
-              >
-                <span className="btn-icon" aria-hidden="true">✦</span>
-                <span>Generate Study Session</span>
-              </button>
+          <div className="prompt-card-actions">
+            {isLoading ? (
+              loadingComponent
+            ) : (
+              <>
+                {errorComponent}
 
-              <div className="product-highlights">
-                <span className="highlight-item">AI-generated</span>
-                <span className="highlight-dot">•</span>
-                <span className="highlight-item">Structured</span>
-                <span className="highlight-dot">•</span>
-                <span className="highlight-item">Interactive</span>
-              </div>
-
-              <div className="example-prompt-wrapper">
-                <span className="example-prompt-label">Try:</span>
                 <button
-                  type="button"
-                  className="example-prompt-pill"
-                  onClick={handleExampleClick}
-                  disabled={isLoading}
+                  type="submit"
+                  id="generate-button"
+                  className="btn btn-primary btn-block generate-btn"
+                  disabled={isInputEmpty || isLoading}
                 >
-                  "Explain DBMS normalization with examples."
+                  <span className="btn-icon" aria-hidden="true">✦</span>
+                  <span>Generate Study Session</span>
+                  <span aria-hidden="true">→</span>
                 </button>
-              </div>
-            </>
-          )}
+
+                <div className="product-highlights">
+                  <span className="highlight-item">AI Generated</span>
+                  <span className="highlight-dot">•</span>
+                  <span className="highlight-item">Structured</span>
+                  <span className="highlight-dot">•</span>
+                  <span className="highlight-item">Interactive</span>
+                </div>
+
+                <div className="example-prompt-wrapper">
+                  <span className="example-prompt-label">Try:</span>
+                  <button
+                    type="button"
+                    className="example-prompt-pill"
+                    onClick={handleExampleClick}
+                    disabled={isLoading}
+                  >
+                    "Explain DBMS normalization with examples. I have an exam tomorrow."
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
         </form>
       </div>
     </div>
