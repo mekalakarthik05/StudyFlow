@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "buildCommand": "npm run build --workspace=client",
+  "buildCommand": "cd client && npm install && npm run build",
   "outputDirectory": "client/dist",
   "functions": {
     "api/generate.js": {
@@ -8,6 +8,6 @@
     }
   },
   "rewrites": [
-    { "source": "/(.*)", "destination": "/index.html" }
+    { "source": "/((?!api/).*)", "destination": "/index.html" }
   ]
 }
