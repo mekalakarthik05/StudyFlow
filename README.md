@@ -224,19 +224,3 @@ Deployed on **Vercel**:
    - Routes `/api/generate` to the serverless function in `api/generate.js`
 
 No special runtime configuration is needed.
-
----
-
-## Interview Quick Reference
-
-**"How does the AI integration work?"**
-> The frontend sends topic + mode + count to `/api/generate`. The serverless function builds a strict JSON-only prompt, calls Gemini with `responseMimeType: 'application/json'`, parses the response, and returns it. The client validates the schema before rendering.
-
-**"How do you handle bad AI output?"**
-> `validateResult.js` checks every field: object type, required keys, string types, array lengths, option counts, correctAnswer range. If anything fails, it returns `null` and the user sees a friendly retry screen.
-
-**"What happens with out-of-order responses?"**
-> A `useRef` counter increments on each request. When a response arrives, it checks if its ID matches the current counter. Stale responses are silently discarded.
-
-**"How is the API key protected?"**
-> `GEMINI_API_KEY` exists only in the server environment (`.env` locally, Vercel environment variables in production). The frontend never contains, imports, or references it. No `VITE_` or `NEXT_PUBLIC_` prefix is used.
