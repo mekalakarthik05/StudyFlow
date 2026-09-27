@@ -1,132 +1,132 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
-export default function Quiz({
-  questions = [],
-  onComplete,
-  headerLabel = 'QUIZ',
-  onBackToOverview,
-}) {
-  const [currentQuestion, setCurrentQuestion] = useState(0);
-  const [selectedOption, setSelectedOption] = useState(null);
-  const [answers, setAnswers] = useState([]);
+const OPTION_LETTERS = ['A', 'B', 'C', 'D'];
 
-  const total = questions.length;
-  const current = questions[currentQuestion] || { question: '', options: [], correctAnswer: 0 };
-  const isOptionSelected = selectedOption !== null;
-  const isLastQuestion = currentQuestion === total - 1;
-  const isRetest = headerLabel === 'RETEST';
+export default function Quiz({ title, questions, isRetest = false, onComplete, onBackToWorkspace }) {
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [selectedAnswers, setSelectedAnswers] = useState({});
 
-  const handleSelectOption = (index) => {
-    if (isOptionSelected) return;
-    setSelectedOption(index);
-    const updated = [...answers];
-    updated[currentQuestion] = index;
-    setAnswers(updated);
+  const total = questions?.length || 0;
+  const currentQ = questions[currentIndex];
+  const selectedOption = selectedAnswers[currentIndex];
+
+  const handleSelectOption = (optIndex) => {
+    setSelectedAnswers((prev) => ({
+      ...prev,
+      [currentIndex]: optIndex,
+    }));
   };
 
   const handleNext = () => {
-    if (!isOptionSelected) return;
-    if (isLastQuestion) {
-      onComplete(answers);
+    if (currentIndex < total - 1) {
+      setCurrentIndex((prev) => prev + 1);
     } else {
-      setCurrentQuestion((prev) => prev + 1);
-      setSelectedOption(null);
+      // Calculate final array of answers ordered by question index
+      const finalAnswers = questions.map((_, i) => selectedAnswers[i]);
+      onComplete(finalAnswers);
     }
   };
 
+  const handlePrev = () => {
+    if (currentIndex > 0) {
+      setCurrentIndex((prev) => prev - 1);
+    }
+  };
+
+  // Keyboard shortcut support (1-4 for options)
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      const key = e.key;
+      if (['1', '2', '3', '4'].includes(key)) {
+        const idx = parseInt(key, 10) - 1;
+        if (idx < currentQ.options.length) {
+          handleSelectOption(idx);
+        }
+      } else if (e.key === 'Enter' && selectedOption !== undefined) {
+        handleNext();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [currentIndex, currentQ, selectedOption]);
+
+  if (!questions || questions.length === 0) return null;
+
+  const progressPercent = Math.round(((currentIndex + 1) / total) * 100);
+
   return (
-    <div className="quiz-container">
-      <div className="quiz-nav-bar">
-        <button type="button" className="btn-back-nav" onClick={onBackToOverview}>
-          <span className="nav-arrow" aria-hidden="true">←</span>
-          <span>Study Session</span>
-        </button>
-      </div>
-
-      <div className="quiz-header-row">
-        <div className={`quiz-badge-tag${isRetest ? ' retest-badge' : ''}`}>
-          {headerLabel}
+    <div className="quiz-session-container">
+      {/* Progress Header */}
+      <div className="session-progress-header">
+        <div className="session-meta-row">
+          <div>
+            <span className={`badge ${isRetest ? 'badge-cyan' : ''}`} style={{ marginRight: '8px' }}>
+              {isRetest ? 'RETEST' : 'QUIZ'}
+            </span>
+            <span style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>{title}</span>
+          </div>
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.9rem', fontWeight: 600 }}>
+            Question {currentIndex + 1} of {total}
+          </div>
         </div>
-        <div className="quiz-progress-text">
-          Question <span className="quiz-counter-current">{currentQuestion + 1}</span> of {total}
+
+        <div className="progress-bar-track">
+          <div className="progress-bar-fill" style={{ width: `${progressPercent}%` }} />
         </div>
       </div>
 
-      {/* Progress dots */}
-      <div className="quiz-progress-track" aria-hidden="true">
-        {questions.map((_, idx) => (
-          <div
-            key={idx}
-            className={`progress-step-dot ${
-              idx < currentQuestion
-                ? 'step-completed'
-                : idx === currentQuestion
-                ? 'step-current'
-                : ''
-            }`}
-          />
-        ))}
-      </div>
+      {/* Question Card */}
+      <div className="quiz-card">
+        <div className="quiz-question-text">{currentQ.question}</div>
 
-      <div className={`card quiz-surface-card${isRetest ? ' retest-card' : ''}`}>
-        <h3 className="quiz-question-heading">{current.question}</h3>
-
-        <div className="quiz-options-group" role="radiogroup" aria-label="Quiz options">
-          {current.options.map((optionText, index) => {
-            const isSelected = selectedOption === index;
-            const isCorrect = index === current.correctAnswer;
-            const isIncorrectSelection = isSelected && !isCorrect;
-
-            let optionClass = 'quiz-option-card';
-            let feedbackTag = null;
-
-            if (isOptionSelected) {
-              if (isCorrect) {
-                optionClass += ' option-state-correct';
-                feedbackTag = '✓ Correct';
-              } else if (isIncorrectSelection) {
-                optionClass += ' option-state-incorrect';
-                feedbackTag = '✕ Incorrect';
-              } else {
-                optionClass += ' option-state-dimmed';
-              }
-            }
-
+        <div className="quiz-options-list" role="radiogroup" aria-label="Question options">
+          {currentQ.options.map((optText, optIndex) => {
+            const isSelected = selectedOption === optIndex;
             return (
               <button
-                key={index}
-                type="button"
-                className={optionClass}
-                onClick={() => handleSelectOption(index)}
-                disabled={isOptionSelected}
+                key={optIndex}
+                className={`quiz-option-btn ${isSelected ? 'selected' : ''}`}
+                onClick={() => handleSelectOption(optIndex)}
+                role="radio"
                 aria-checked={isSelected}
               >
-                <div className="option-badge-circle">
-                  <span className="option-letter-char">
-                    {String.fromCharCode(65 + index)}
-                  </span>
-                </div>
-                <span className="option-label-text">{optionText}</span>
-                {feedbackTag && (
-                  <span className="option-status-tag" aria-live="polite">
-                    {feedbackTag}
-                  </span>
-                )}
+                <div className="quiz-option-letter">{OPTION_LETTERS[optIndex]}</div>
+                <div style={{ flex: 1 }}>{optText}</div>
               </button>
             );
           })}
         </div>
+      </div>
 
-        <div className="quiz-action-footer">
-          <button
-            type="button"
-            className="btn btn-primary btn-block quiz-submit-step-btn"
-            onClick={handleNext}
-            disabled={!isOptionSelected}
-          >
-            {isLastQuestion ? 'See Results →' : 'Next Question →'}
-          </button>
-        </div>
+      {/* Action Controls */}
+      <div className="flashcard-controls">
+        <button
+          className="btn btn-secondary"
+          onClick={handlePrev}
+          disabled={currentIndex === 0}
+        >
+          ← Previous
+        </button>
+
+        <button
+          className="btn btn-primary"
+          onClick={handleNext}
+          disabled={selectedOption === undefined}
+          id="quiz-next-btn"
+        >
+          {currentIndex === total - 1
+            ? isRetest
+              ? 'Submit Retest →'
+              : 'Submit Quiz →'
+            : 'Next Question →'}
+        </button>
+      </div>
+
+      <div style={{ textAlign: 'center', marginTop: '8px' }}>
+        <button className="btn btn-ghost btn-sm" onClick={onBackToWorkspace}>
+          ← Back to Topic
+        </button>
       </div>
     </div>
   );

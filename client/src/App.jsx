@@ -1,168 +1,88 @@
-import React, { useState, useRef } from 'react';
-import Header from './components/Header.jsx';
-import PromptInput from './components/PromptInput.jsx';
-import LoadingState from './components/LoadingState.jsx';
-import ErrorState from './components/ErrorState.jsx';
-import StudyOverview from './components/StudyOverview.jsx';
-import FlashcardDeck from './components/FlashcardDeck.jsx';
-import Quiz from './components/Quiz.jsx';
-import QuizResult from './components/QuizResult.jsx';
-import { generateStudySession, mapErrorCodeToMessage } from './lib/api.js';
-import { validateResult } from './lib/validateResult.js';
+import React, { useState } from 'react';
+import Navbar from './components/Navbar.jsx';
+import Hero from './components/Hero.jsx';
+import FeatureSection from './components/FeatureSection.jsx';
+import Workspace from './components/Workspace.jsx';
 
 export default function App() {
-  // Application-level state (Section 6.1)
-  const [input, setInput] = useState('');
-  const [status, setStatus] = useState('idle'); // 'idle' | 'loading' | 'success' | 'error'
-  const [errorMessage, setErrorMessage] = useState(null);
-  const [studyData, setStudyData] = useState(null); // validated StudyResult
-  const [view, setView] = useState('home'); // 'home' | 'overview' | 'flashcards' | 'quiz' | 'result' | 'retest'
-  const requestId = useRef(0);
+  const [currentView, setCurrentView] = useState('landing'); // 'landing' | 'workspace'
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [initialTopic, setInitialTopic] = useState('');
 
-  // Scoped result / retest state
-  const [activeQuizState, setActiveQuizState] = useState({
-    questions: [],
-    answers: [],
-    isRetest: false,
-  });
-  const [retestQuestions, setRetestQuestions] = useState([]);
+  const handleStartLearning = (topic = '') => {
+    if (topic) setInitialTopic(topic);
+    setCurrentView('workspace');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
-  // Stale-response protected generator (Section 6.4)
-  const handleGenerate = async () => {
-    if (!input || input.trim().length === 0) {
-      setStatus('error');
-      setErrorMessage('Please enter a topic or some notes.');
-      return;
-    }
-
-    const id = ++requestId.current;
-    setStatus('loading');
-    setErrorMessage(null);
-
-    try {
-      const raw = await generateStudySession(input);
-      if (id !== requestId.current) return; // Discard stale response
-
-      const validated = validateResult(raw);
-      if (!validated) {
-        setStatus('error');
-        setErrorMessage('The AI returned an invalid response.');
-        return;
+  const handleNavigate = (viewId) => {
+    if (viewId === 'workspace') {
+      setCurrentView('workspace');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else if (viewId === 'landing') {
+      setCurrentView('landing');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else if (viewId === 'how-it-works') {
+      if (currentView !== 'landing') {
+        setCurrentView('landing');
+        setTimeout(() => {
+          document.getElementById('how-it-works-section')?.scrollIntoView({ behavior: 'smooth' });
+        }, 100);
+      } else {
+        document.getElementById('how-it-works-section')?.scrollIntoView({ behavior: 'smooth' });
       }
-
-      setStudyData(validated);
-      setStatus('success');
-      setView('overview');
-    } catch (errCode) {
-      if (id !== requestId.current) return; // Discard stale error
-      setStatus('error');
-      setErrorMessage(mapErrorCodeToMessage(errCode));
+    } else if (viewId === 'features') {
+      if (currentView !== 'landing') {
+        setCurrentView('landing');
+        setTimeout(() => {
+          document.getElementById('features-section')?.scrollIntoView({ behavior: 'smooth' });
+        }, 100);
+      } else {
+        document.getElementById('features-section')?.scrollIntoView({ behavior: 'smooth' });
+      }
     }
-  };
-
-  const handleNewStudy = () => {
-    setInput('');
-    setStatus('idle');
-    setErrorMessage(null);
-    setStudyData(null);
-    setActiveQuizState({ questions: [], answers: [], isRetest: false });
-    setRetestQuestions([]);
-    setView('home');
-  };
-
-  const handleBackToOverview = () => {
-    setView('overview');
-  };
-
-  const handleOriginalQuizComplete = (answers) => {
-    setActiveQuizState({
-      questions: studyData.quiz,
-      answers,
-      isRetest: false,
-    });
-    setView('result');
-  };
-
-  const handleRetestTrigger = (wrongQuestions) => {
-    setRetestQuestions(wrongQuestions);
-    setView('retest');
-  };
-
-  const handleRetestComplete = (answers) => {
-    setActiveQuizState({
-      questions: retestQuestions,
-      answers,
-      isRetest: true,
-    });
-    setView('result');
   };
 
   return (
-    <div className="app-shell">
-      <Header />
+    <div className="landing-shell">
+      <Navbar
+        currentView={currentView}
+        onNavigate={handleNavigate}
+        onStartLearning={() => handleStartLearning()}
+        onToggleSidebar={() => setSidebarOpen((prev) => !prev)}
+        showSidebarToggle={currentView === 'workspace'}
+      />
 
-      <main className="main-content">
-        {view === 'home' && (
-          <PromptInput
-            input={input}
-            setInput={setInput}
-            onSubmit={handleGenerate}
-            status={status}
-            loadingComponent={<LoadingState />}
-            errorComponent={
-              status === 'error' && errorMessage ? (
-                <ErrorState message={errorMessage} onRetry={handleGenerate} />
-              ) : null
-            }
-          />
-        )}
+      {currentView === 'landing' ? (
+        <>
+          <main>
+            <Hero
+              onStartLearning={() => handleStartLearning()}
+              onSeeHowItWorks={() => handleNavigate('how-it-works')}
+            />
+            <FeatureSection onStartLearning={() => handleStartLearning()} />
+          </main>
 
-        {view === 'overview' && studyData && (
-          <StudyOverview
-            studyData={studyData}
-            onStartFlashcards={() => setView('flashcards')}
-            onStartQuiz={() => setView('quiz')}
-            onNewStudy={handleNewStudy}
-          />
-        )}
-
-        {view === 'flashcards' && studyData && (
-          <FlashcardDeck
-            flashcards={studyData.flashcards}
-            onBackToOverview={handleBackToOverview}
-          />
-        )}
-
-        {view === 'quiz' && studyData && (
-          <Quiz
-            key="original-quiz"
-            questions={studyData.quiz}
-            headerLabel="QUIZ"
-            onComplete={handleOriginalQuizComplete}
-            onBackToOverview={handleBackToOverview}
-          />
-        )}
-
-        {view === 'retest' && retestQuestions.length > 0 && (
-          <Quiz
-            key="retest-quiz"
-            questions={retestQuestions}
-            headerLabel="RETEST"
-            onComplete={handleRetestComplete}
-            onBackToOverview={handleBackToOverview}
-          />
-        )}
-
-        {view === 'result' && (
-          <QuizResult
-            questions={activeQuizState.questions}
-            answers={activeQuizState.answers}
-            isRetest={activeQuizState.isRetest}
-            onRetest={handleRetestTrigger}
-            onBackToOverview={handleBackToOverview}
-          />
-        )}
-      </main>
+          <footer className="app-footer">
+            <div className="footer-content">
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span className="brand-icon" style={{ width: '24px', height: '24px', fontSize: '0.8rem' }}>
+                  ✦
+                </span>
+                <strong style={{ color: 'var(--text-white)' }}>STUDYFLOW</strong>
+                <span>— AI-Powered Interactive Learning Workspace</span>
+              </div>
+              <div>Built with React, Gemini LLM & Serverless Architecture</div>
+            </div>
+          </footer>
+        </>
+      ) : (
+        <Workspace
+          initialTopic={initialTopic}
+          sidebarOpen={sidebarOpen}
+          setSidebarOpen={setSidebarOpen}
+        />
+      )}
     </div>
   );
 }

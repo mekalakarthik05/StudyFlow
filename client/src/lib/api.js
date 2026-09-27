@@ -1,67 +1,89 @@
 /**
- * Maps short error codes to human-readable error messages.
- * Exact mapping required by Section 7.1.
+ * StudyFlow — Frontend API Client
  *
- * @param {string} code - Error code
- * @returns {string} User-facing error message
+ * Dispatches requests to /api/generate with timeout protection and returns parsed JSON.
+ */
+
+/**
+ * Maps error codes to friendly, reassuring user messages.
+ * Never displays developer jargon (500, JSON.parse, API key).
  */
 export function mapErrorCodeToMessage(code) {
   switch (code) {
     case 'missing_input':
-      return 'Please enter a topic or some notes.';
-    case 'invalid_json':
-      return 'The AI returned an invalid response.';
-    case 'incomplete_schema':
-      return 'The generated study session was incomplete.';
-    case 'provider_error':
-      return "We couldn't generate your study session.";
+      return 'Please enter a topic or paste your notes to begin.';
+    case 'input_too_large':
+      return 'Your notes are a bit too long. Try summarizing or pasting a shorter section.';
     case 'timeout':
-      return 'The request took too long. Please try again.';
+      return 'The study assistant took longer than expected. Please try again in a moment.';
     case 'network':
-      return "We couldn't connect to the server.";
+      return "We couldn't connect to the study service. Please check your internet connection.";
+    case 'invalid_json':
+    case 'incomplete_schema':
+    case 'provider_error':
     default:
-      return 'Something went wrong. Please try again.';
+      return "Our study assistant is taking a little break right now. Please try again in a moment — your topic is saved.";
   }
 }
 
 /**
- * Sends the user input to the backend to generate a structured study session.
+ * Sends topic, mode, count, and difficulty to the backend proxy.
  *
- * @param {string} input - User topic or notes
- * @returns {Promise<object>} Parsed JS object from server response
- * @throws {string} Rejects with a short error code (e.g., 'missing_input', 'invalid_json', 'provider_error', 'timeout', 'network')
+ * @param {object} params
+ * @param {string} params.input - User topic or notes
+ * @param {'flashcards' | 'quiz'} params.mode - Selected learning mode
+ * @param {number} params.count - Number of items to generate
+ * @param {'Easy' | 'Medium' | 'Hard'} [params.difficulty] - Quiz difficulty
+ * @param {number} [timeoutMs=30000] - Request timeout in ms
+ * @returns {Promise<object>} Parsed response data
  */
-export async function generateStudySession(input) {
-  let response;
+export async function generateStudySession({ input, mode = 'flashcards', count = 5, difficulty = 'Medium', timeoutMs = 30000 }) {
+  if (!input || typeof input !== 'string' || input.trim().length === 0) {
+    throw 'missing_input';
+  }
+
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
   try {
-    response = await fetch('/api/generate', {
+    const response = await fetch('/api/generate', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ input }),
+      body: JSON.stringify({
+        input: input.trim(),
+        mode,
+        count,
+        difficulty,
+      }),
+      signal: controller.signal,
     });
-  } catch (networkErr) {
-    // Network failure (e.g. server down or offline)
-    throw 'network';
-  }
 
-  if (!response.ok) {
-    try {
-      const errorData = await response.json();
-      if (errorData && typeof errorData.error === 'string') {
-        throw errorData.error;
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      try {
+        const errorData = await response.json();
+        if (errorData && typeof errorData.error === 'string') {
+          throw errorData.error;
+        }
+      } catch (e) {
+        if (typeof e === 'string') throw e;
       }
-    } catch (e) {
-      if (typeof e === 'string') throw e;
+      throw 'provider_error';
     }
-    throw 'provider_error';
-  }
 
-  try {
     const data = await response.json();
     return data;
-  } catch (parseErr) {
-    throw 'invalid_json';
+  } catch (err) {
+    clearTimeout(timeoutId);
+    if (err.name === 'AbortError') {
+      throw 'timeout';
+    }
+    if (typeof err === 'string') {
+      throw err;
+    }
+    throw 'network';
   }
 }

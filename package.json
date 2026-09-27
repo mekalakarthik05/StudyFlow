@@ -1,20 +1,26 @@
 {
   "name": "studyflow",
   "version": "1.0.0",
-  "description": "StudyFlow - AI-Powered Study Assistant",
+  "description": "StudyFlow - AI-Powered Interactive Learning Workspace",
   "private": true,
   "engines": {
-    "node": "24.x"
+    "node": ">=18.0.0"
   },
+  "type": "module",
   "workspaces": [
     "client",
     "server"
   ],
   "scripts": {
     "start": "concurrently \"npm run start --workspace=server\" \"npm run dev --workspace=client\"",
+    "dev": "concurrently \"npm run start --workspace=server\" \"npm run dev --workspace=client\"",
     "server": "npm run start --workspace=server",
     "client": "npm run dev --workspace=client",
+    "build": "cd client && npm run build",
     "test": "node client/src/lib/validateResult.test.js"
+  },
+  "dependencies": {
+    "@google/generative-ai": "^0.24.0"
   },
   "devDependencies": {
     "concurrently": "^9.1.2"

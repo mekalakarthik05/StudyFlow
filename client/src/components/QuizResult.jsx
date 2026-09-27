@@ -1,106 +1,138 @@
-import React from 'react';
+import React, { useState } from 'react';
 
-export default function QuizResult({
-  questions = [],
-  answers = [],
-  onRetest,
-  onBackToOverview,
-  isRetest = false,
-}) {
-  const total = questions.length;
-  const score = answers.filter(
-    (a, i) => questions[i] && a === questions[i].correctAnswer
-  ).length;
-  const percent = total > 0 ? Math.round((score / total) * 100) : 0;
+const OPTION_LETTERS = ['A', 'B', 'C', 'D'];
 
-  const wrongIndexes = questions
-    .map((_, i) => i)
-    .filter((i) => questions[i] && answers[i] !== questions[i].correctAnswer);
+export default function QuizResult({ title, questions, userAnswers, isRetest = false, onRetestWrong, onRestartFullQuiz, onContinueLearning }) {
+  const [showBreakdown, setShowBreakdown] = useState(false);
 
-  const missedCount = wrongIndexes.length;
-  const hasWrongAnswers = missedCount > 0;
+  // Calculate scores locally on the client
+  const results = questions.map((q, idx) => {
+    const selected = userAnswers[idx];
+    const isCorrect = selected === q.correctAnswer;
+    return {
+      ...q,
+      selected,
+      isCorrect,
+      questionIndex: idx,
+    };
+  });
 
-  const handleRetestClick = () => {
-    const wrongQuestions = wrongIndexes.map((i) => questions[i]);
-    onRetest(wrongQuestions);
-  };
+  const correctCount = results.filter((r) => r.isCorrect).length;
+  const totalCount = questions.length;
+  const percentage = Math.round((correctCount / totalCount) * 100);
+  const wrongQuestions = results.filter((r) => !r.isCorrect);
 
-  // SVG ring math
-  const radius = 50;
-  const circumference = 2 * Math.PI * radius;
-  const strokeDashoffset = circumference - (percent / 100) * circumference;
+  const isPerfect = correctCount === totalCount;
 
   return (
-    <div className="quiz-result-wrapper">
-      <div className="card result-surface-card">
-        <h2 className="result-headline">
-          {isRetest ? 'Retest Complete' : 'Quiz Complete'}
-        </h2>
+    <div className="quiz-result-card">
+      <div
+        className="result-score-circle"
+        style={{
+          borderColor: isPerfect ? 'var(--accent-emerald)' : percentage >= 70 ? 'var(--primary)' : 'var(--accent-rose)',
+        }}
+      >
+        <span className="score-number">
+          {correctCount}/{totalCount}
+        </span>
+        <span className="score-percent">{percentage}%</span>
+      </div>
 
-        {/* SVG score ring */}
-        <div className="score-ring-container">
-          <div className="score-ring">
-            <svg className="score-ring-svg" viewBox="0 0 120 120">
-              <defs>
-                <linearGradient id="ringGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                  <stop offset="0%" stopColor="#3B82F6" />
-                  <stop offset="100%" stopColor="#8B5CF6" />
-                </linearGradient>
-              </defs>
-              <circle
-                className="score-ring-track"
-                cx="60" cy="60" r={radius}
-              />
-              <circle
-                className="score-ring-fill"
-                cx="60" cy="60" r={radius}
-                strokeDasharray={circumference}
-                strokeDashoffset={strokeDashoffset}
-              />
-            </svg>
-            <div className="score-ring-center">
-              <span className="score-ring-percent">{percent}%</span>
-              <span className="score-ring-label">Correct</span>
-            </div>
+      <h2 className="result-heading">
+        {isRetest ? 'Retest Complete!' : isPerfect ? 'Perfect Score! 🎉' : 'Quiz Complete!'}
+      </h2>
+
+      <p className="result-message">
+        {isPerfect
+          ? `Flawless mastery of ${title}. You answered every question correctly!`
+          : `${wrongQuestions.length} concept${wrongQuestions.length > 1 ? 's' : ''} need another look. Keep strengthening your understanding.`}
+      </p>
+
+      {/* Action Buttons */}
+      <div className="result-actions" style={{ marginBottom: '24px' }}>
+        {!isPerfect && wrongQuestions.length > 0 && (
+          <button
+            className="btn btn-primary"
+            onClick={() => onRetestWrong(wrongQuestions)}
+            id="retest-wrong-btn"
+          >
+            🎯 Retest Wrong Answers ({wrongQuestions.length})
+          </button>
+        )}
+
+        <button className="btn btn-secondary" onClick={onRestartFullQuiz}>
+          🔄 Try Full Quiz Again
+        </button>
+
+        <button className="btn btn-ghost" onClick={() => setShowBreakdown(!showBreakdown)}>
+          {showBreakdown ? 'Hide Detailed Breakdown' : 'View Detailed Breakdown'}
+        </button>
+
+        <button className="btn btn-primary" onClick={onContinueLearning}>
+          Continue Learning →
+        </button>
+      </div>
+
+      {/* Expandable detailed breakdown */}
+      {showBreakdown && (
+        <div style={{ textAlign: 'left', marginTop: '30px', borderTop: '1px solid var(--border-subtle)', paddingTop: '24px' }}>
+          <h3 style={{ fontSize: '1.1rem', marginBottom: '16px' }}>Question Breakdown</h3>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            {results.map((r, i) => (
+              <div
+                key={i}
+                style={{
+                  background: 'var(--bg-surface)',
+                  border: `1px solid ${r.isCorrect ? 'rgba(16, 185, 129, 0.3)' : 'rgba(244, 63, 94, 0.3)'}`,
+                  borderRadius: 'var(--radius-lg)',
+                  padding: '16px 20px',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+                  <span style={{ fontWeight: 600, color: 'var(--text-white)' }}>
+                    Question {i + 1}
+                  </span>
+                  <span
+                    style={{
+                      fontSize: '0.8rem',
+                      fontWeight: 700,
+                      padding: '2px 8px',
+                      borderRadius: '4px',
+                      background: r.isCorrect ? 'rgba(16, 185, 129, 0.15)' : 'rgba(244, 63, 94, 0.15)',
+                      color: r.isCorrect ? '#6EE7B7' : '#FDA4AF',
+                    }}
+                  >
+                    {r.isCorrect ? '✓ Correct' : '✗ Incorrect'}
+                  </span>
+                </div>
+
+                <div style={{ fontSize: '0.95rem', color: '#E2E8F0', marginBottom: '12px' }}>
+                  {r.question}
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '0.85rem' }}>
+                  <div>
+                    <span style={{ color: 'var(--text-muted)' }}>Your answer: </span>
+                    <span style={{ color: r.isCorrect ? '#6EE7B7' : '#FDA4AF', fontWeight: 600 }}>
+                      {r.selected !== undefined
+                        ? `${OPTION_LETTERS[r.selected]}. ${r.options[r.selected]}`
+                        : 'None'}
+                    </span>
+                  </div>
+                  {!r.isCorrect && (
+                    <div>
+                      <span style={{ color: 'var(--text-muted)' }}>Correct answer: </span>
+                      <span style={{ color: '#6EE7B7', fontWeight: 600 }}>
+                        {OPTION_LETTERS[r.correctAnswer]}. {r.options[r.correctAnswer]}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))}
           </div>
         </div>
-
-        <div className="result-score-fraction">
-          <span className="score-fraction-highlight">{score}</span>
-          {' / '}
-          <span className="score-fraction-highlight">{total}</span>
-          {' questions correct'}
-        </div>
-
-        <div className="result-insight-message">
-          {missedCount === 0 ? (
-            <p className="insight-perfect">✦ Perfect score! Excellent understanding.</p>
-          ) : (
-            <p className="insight-missed">
-              You missed {missedCount} {missedCount === 1 ? 'question' : 'questions'}.
-            </p>
-          )}
-        </div>
-
-        <div className="result-action-stack">
-          {!isRetest && hasWrongAnswers && (
-            <button
-              type="button"
-              className="btn btn-primary btn-block retest-cta-btn"
-              onClick={handleRetestClick}
-            >
-              Retest Wrong Answers ({missedCount}) →
-            </button>
-          )}
-          <button
-            type="button"
-            className={`btn ${!isRetest && hasWrongAnswers ? 'btn-secondary' : 'btn-primary'} btn-block return-overview-btn`}
-            onClick={onBackToOverview}
-          >
-            ← Back to Study Session
-          </button>
-        </div>
-      </div>
+      )}
     </div>
   );
 }
