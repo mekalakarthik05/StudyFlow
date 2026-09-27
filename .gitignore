@@ -31,4 +31,11 @@ pnpm-debug.log*
 *.sln
 *.sw?
 .DS_Store
+
 .vercel/
+.env
+.env.*
+!.env.example
+node_modules/
+dist/
+build/
